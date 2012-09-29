@@ -387,6 +387,54 @@ module Compute
       response = @connection.req("DELETE", "/os-security-group-rules/#{id}")
       true
     end
+    
+    #os-float-ips
+    def list_float_ips
+      raise OpenStack::Exception::NotImplemented.new("os-floating-ips not implemented by #{@connection.http.keys.first}", 501, "NOT IMPLEMENTED") unless api_extensions[:"os-floating-ips"] or api_extensions[:floating_ips]
+      response = @connection.req("GET", "/os-floating-ips") 
+      res = OpenStack.symbolize_keys(JSON.parse(response.body))
+      res[:floating_ips]
+    end
+
+    def allocate_float_ip(pool)  
+      raise OpenStack::Exception::NotImplemented.new("os-floating-ips not implemented by #{@connection.http.keys.first}", 501, "NOT IMPLEMENTED") unless api_extensions[:"os-floating-ips"] or api_extensions[:floating_ips]
+      data = JSON.generate("pool" => pool)
+      response = @connection.req("POST", "/os-floating-ips", {:data => data})
+      res = OpenStack.symbolize_keys(JSON.parse(response.body))
+      {res[:floating_ip][:id].to_s => res[:floating_ip]}
+    end
+    
+    def deallocate_float_ip(id)
+      raise OpenStack::Exception::NotImplemented.new("os-floating-ips not implemented by #{@connection.http.keys.first}", 501, "NOT IMPLEMENTED") unless api_extensions[:"os-floating-ips"] or api_extensions[:floating_ips]
+      response = @connection.req("DELETE", "/os-floating-ips/#{id}") 
+      true
+    end
+    
+    def associate_float_ip(instance_id, float_ip)
+       system("ssh root@192.168.10.143 -p 10143 \"nova add-floating-ip #{instance_id} #{float_ip}\" >/home/omp/ssh.out 2>&1")
+       [instance_id, float_ip]
+#      raise OpenStack::Exception::NotImplemented.new("os-floating-ips not implemented by #{@connection.http.keys.first}", 501, "NOT IMPLEMENTED") unless api_extensions[:"os-floating-ips"] or api_extensions[:floating_ips]
+#      data = JSON.generate(:addFloatingIp => {"address" => fixed_ip})
+#      response = @connection.req("POST", "/os-floating-ips/#{id}/action", {:data => data})
+#      res = OpenStack.symbolize_keys(JSON.parse(response.body))
+#      {res[:floating_ip][:id].to_s => res[:floating_ip]}
+    end
+    
+    def get_one_float_ip
+      find_one_float_ip(list_float_ips)  
+    end
+
+    def find_one_float_ip(floating_ips)
+      (fp = floating_ips.select {|h| h[:instance_id] == nil && h[:fixed_ip] == nil}).count == 0 ? nil : fp.first[:ip]
+    end
+    
+    def disassociate_float_ip(instance_id, float_ip)
+       system("ssh root@192.168.10.143 -p 10143 \"nova remove-floating-ip #{instance_id} #{float_ip}\" >/home/omp/ssh.out 2>&1")
+       [instance_id, float_ip]
+#      raise OpenStack::Exception::NotImplemented.new("os-floating-ips not implemented by #{@connection.http.keys.first}", 501, "NOT IMPLEMENTED") unless api_extensions[:"os-floating-ips"] or api_extensions[:floating_ips]
+#      response = @connection.req("POST", "/os-floating-ips/#{id}/removeFloatingIp")
+#      true
+    end
   end
 end
 end
