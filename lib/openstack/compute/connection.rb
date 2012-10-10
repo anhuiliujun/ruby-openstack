@@ -410,8 +410,8 @@ module Compute
       true
     end
     
-    def associate_float_ip(instance_id, float_ip)
-       system("ssh root@192.168.10.143 -p 10143 \"nova add-floating-ip #{instance_id} #{float_ip}\" >/home/omp/ssh.out 2>&1")
+    def associate_float_ip(instance_id, float_ip, os_connection)
+       system("ssh root@192.168.10.143 -p 10143 \"source /root/#{os_connection} && nova add-floating-ip #{instance_id} #{float_ip}\" >/home/omp/ssh.out 2>&1")
        [instance_id, float_ip]
 #      raise OpenStack::Exception::NotImplemented.new("os-floating-ips not implemented by #{@connection.http.keys.first}", 501, "NOT IMPLEMENTED") unless api_extensions[:"os-floating-ips"] or api_extensions[:floating_ips]
 #      data = JSON.generate(:addFloatingIp => {"address" => fixed_ip})
@@ -428,8 +428,8 @@ module Compute
       (fp = floating_ips.select {|h| h[:instance_id] == nil && h[:fixed_ip] == nil}).count == 0 ? nil : fp.first[:ip]
     end
     
-    def disassociate_float_ip(instance_id, float_ip)
-       system("ssh root@192.168.10.143 -p 10143 \"nova remove-floating-ip #{instance_id} #{float_ip}\" >/home/omp/ssh.out 2>&1")
+    def disassociate_float_ip(instance_id, float_ip, os_connection)
+       system("ssh root@192.168.10.143 -p 10143 \"source /root/#{os_connection} && nova remove-floating-ip #{instance_id} #{float_ip}\" >/home/omp/ssh.out 2>&1")
        [instance_id, float_ip]
 #      raise OpenStack::Exception::NotImplemented.new("os-floating-ips not implemented by #{@connection.http.keys.first}", 501, "NOT IMPLEMENTED") unless api_extensions[:"os-floating-ips"] or api_extensions[:floating_ips]
 #      response = @connection.req("POST", "/os-floating-ips/#{id}/removeFloatingIp")
